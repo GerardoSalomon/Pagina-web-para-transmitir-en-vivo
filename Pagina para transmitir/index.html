@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Transmisión en vivo con OBS</title>
+</head>
+<body>
+  <h1>Transmision ThunderBird Hatch</h1>
+  
+  <!-- Agrega un reproductor de video para mostrar la transmisión -->
+  <div id="video-container">
+    <video id="player" controls autoplay></video>
+  </div>
+
+  <!-- Agrega un botón para iniciar la transmisión -->
+  <button onclick="startStream()">Iniciar transmisión</button>
+
+  <script>
+    async function startStream() {
+      const player = document.getElementById('player');
+
+      try {
+        const streamURL = 'http://127.0.0.1:7000/livestream/stream.m3u8'; // Reemplaza con la URL de tu servidor RTMP
+        const streamKey = 'stream'; // Reemplaza con la clave de tu transmisión
+
+        const mediaSource = new MediaSource();
+        player.src = URL.createObjectURL(mediaSource);
+
+        // Manejador para el evento 'sourceopen'
+        mediaSource.addEventListener('sourceopen', async () => {
+          const sourceBuffer = mediaSource.addSourceBuffer('video/mp4; codecs="avc1.42E01E, mp4a.40.2"');
+
+          const response = await fetch(`${streamURL}/${streamKey}.flv`);
+          const reader = response.body.getReader();
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            sourceBuffer.appendBuffer(value);
+          }
+        });
+      } catch (error) {
+        console.error('Error al iniciar la transmisión:', error);
+      }
+    }
+  </script>
+</body>
+</html>
